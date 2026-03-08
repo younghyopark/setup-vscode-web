@@ -1,252 +1,119 @@
-# 🚢 rdock
+# setup-vscode-web
 
-Persistent dev station for remote development. One command to deploy a complete development environment with persistent terminal and VS Code in your browser. No need to consistently relogin to your SSH every single time 
+Simple, secure VS Code Web setup helper. One command to get VS Code running in your browser with HTTPS and password authentication.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" alt="Python 3.11+">
-  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License">
-</p>
+## Quick Start
 
-## ✨ Features
-
-- **🔒 Secure**: HTTPS with Let's Encrypt SSL + password authentication
-- **💾 Persistent**: Sessions survive browser restarts using tmux
-- **🎨 Modern UI**: Clean, dark interface with tabbed terminals
-- **📁 VS Code**: Built-in VS Code web editor (optional)
-- **🚀 One Command**: Install and deploy in seconds
-- **🔄 Auto-restart**: systemd service ensures 24/7 uptime
-- **🌍 Cross-browser**: State synced server-side
-
-## 📦 Quick Install
-
-**One-line installation:**
+**One-liner (interactive):**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/install.sh | bash -s -- \
-  -d rdock.yourdomain.com \
+curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/setup-vscode-web.sh | bash
+```
+
+**With flags (no prompts):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/setup-vscode-web.sh | bash -s -- \
+  -d dev.example.com \
   -u admin
 ```
 
-Replace:
-- `rdock.yourdomain.com` with your domain
-- `admin` with your desired username
+You'll be prompted for a password during setup.
 
-You'll be prompted to create a password during installation.
+## What It Does
 
-## 📋 Requirements
+1. Installs the official [VS Code CLI](https://code.visualstudio.com/docs/remote/tunnels)
+2. Sets up nginx as a reverse proxy
+3. Configures HTTPS with Let's Encrypt (auto-renewal)
+4. Adds password authentication (HTTP Basic Auth, bcrypt)
+5. Adds security headers (HSTS, X-Frame-Options, etc.)
+6. Creates a systemd service for auto-start on boot
+
+## Requirements
 
 - **OS**: Ubuntu 20.04+ or Debian 10+ (with sudo access)
 - **DNS**: Domain pointing to your server's IP
-- **Ports**: 80 (HTTP) and 443 (HTTPS) open
+- **Ports**: 80 and 443 open
 
-## 🎯 Usage
-
-After installation, access your environment at:
-- `https://your-domain.com` (rdock terminal)
-- `https://your-domain.com/code/` (VS Code, if enabled)
-
-### Keyboard Shortcuts
-
-- `Cmd/Ctrl+T` - New terminal tab
-- `Cmd/Ctrl+W` - Close current tab (overrides browser close)
-- `Ctrl+Tab` - Next tab
-- `Ctrl+Shift+Tab` - Previous tab
-- `Ctrl+Shift+E` - Open VS Code tab
-
-### Managing the Service
-
-```bash
-# View logs
-sudo journalctl -u rdock -f
-
-# Restart service
-sudo systemctl restart rdock
-
-# Check status
-sudo systemctl status rdock
-
-# Update to latest version
-cd ~/.rdock && git pull && sudo systemctl restart rdock
-```
-
-## 💻 VS Code Only (Standalone)
-
-Want just VS Code in your browser without the full rdock terminal? Use the lightweight installer:
-
-**One-liner (interactive - asks you everything):**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/install-vscode.sh | bash
-```
-
-**One-liner with flags (no prompts):**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/install-vscode.sh | bash -s -- \
-  -d myserver.example.com \
-  -p 8893 \
-  -u admin
-```
-
-This installs the official VS Code CLI, sets up nginx to reverse-proxy at `https://DOMAIN/code/`, configures SSL, and runs it as a systemd service. If an nginx config already exists for the domain, it appends the `/code/` location block.
+## Options
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `-d` | Domain name | _(prompted)_ |
-| `-p` | Local port | `8893` |
-| `-u` | Username for basic auth | _(none)_ |
-| `--no-auth` | Skip basic auth | |
-| `-s` | Skip SSL/certbot | |
+| `-d, --domain` | Domain name | _(prompted)_ |
+| `-u, --username` | Username for auth (required) | _(prompted)_ |
+| `-p, --port` | Local port for VS Code | `8893` |
+| `-b, --base-path` | URL path prefix | `/code` |
+| `-s, --skip-ssl` | Skip SSL (not recommended) | |
+| `--uninstall` | Remove VS Code Web service | |
 
-## ⚙️ Advanced Options
+## Security
 
-### Skip SSL (use existing certificate)
+All security measures are enabled by default:
 
-```bash
-curl -fsSL <url>/install.sh | bash -s -- -d domain.com -u admin -s
-```
+- **HTTPS enforced** — HTTP automatically redirects to HTTPS (via certbot)
+- **HSTS** — browsers remember to always use HTTPS (`max-age=31536000`)
+- **Password auth required** — HTTP Basic Auth with bcrypt-hashed passwords
+- **Security headers** — `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`
+- **Localhost binding** — VS Code only listens on `127.0.0.1`, never exposed directly
+- **Non-root** — runs as your regular user via systemd
 
-### Skip VS Code
-
-```bash
-curl -fsSL <url>/install.sh | bash -s -- -d domain.com -u admin -c
-```
-
-### Custom port
+### Add / Remove Users
 
 ```bash
-curl -fsSL <url>/install.sh | bash -s -- -d domain.com -u admin -p 9000
-```
-
-### Manual Installation
-
-```bash
-# Clone repository
-git clone https://github.com/younghyopark/rdock.git ~/.rdock
-cd ~/.rdock
-
-# Create Python environment
-conda create -p .conda python=3.11
-.conda/bin/pip install -r requirements.txt
-
-# Run deployment
-bash deploy.sh -d your-domain.com -u admin
-```
-
-## 🔐 Security
-
-- **Authentication**: HTTP Basic Auth via nginx (bcrypt hashed passwords)
-- **Encryption**: TLS 1.2+ with Let's Encrypt certificates
-- **Sessions**: 30-day secure cookies (httponly)
-- **Isolation**: Runs as non-root user with minimal permissions
-
-### Add Additional Users
-
-```bash
+# Add a user
 sudo htpasswd /etc/nginx/.htpasswd newuser
+
+# Remove a user
+sudo htpasswd -D /etc/nginx/.htpasswd olduser
 ```
 
-## 🗑️ Uninstall
+## Managing the Service
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/install.sh | bash -s -- --uninstall
+# View logs
+sudo journalctl -u vscode-web -f
+
+# Restart
+sudo systemctl restart vscode-web
+
+# Check status
+sudo systemctl status vscode-web
+
+# Renew SSL certificate
+sudo certbot renew
 ```
 
-Or manually:
+## Architecture
+
+```
+Browser (HTTPS/443)
+    |
+nginx (SSL termination + Basic Auth + Security Headers)
+    |
+code-cli serve-web (127.0.0.1:8893)
+    |
+VS Code Web UI
+```
+
+## Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `/etc/nginx/sites-available/DOMAIN` | nginx config |
+| `/etc/nginx/.htpasswd` | User credentials (bcrypt) |
+| `/etc/letsencrypt/live/DOMAIN/` | SSL certificates |
+| `/etc/systemd/system/vscode-web.service` | systemd unit |
+
+## Uninstall
 
 ```bash
-sudo systemctl stop rdock vscode-web
-sudo systemctl disable rdock vscode-web
-sudo rm /etc/systemd/system/rdock.service
-sudo rm /etc/systemd/system/vscode-web.service
-rm -rf ~/.rdock
+curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/setup-vscode-web.sh | bash -s -- --uninstall
 ```
 
-## 🛠️ Troubleshooting
+## Legacy
 
-### Service not responding
+The `legacy/` folder contains the original rdock project — a full remote development environment with a web-based terminal (xterm.js + tmux persistence) and integrated VS Code. See `legacy/REFERENCE.md` for details.
 
-```bash
-# Check service status
-sudo systemctl status rdock
+## License
 
-# View detailed logs
-sudo journalctl -u rdock -n 50
-
-# Restart service
-sudo systemctl restart rdock
-```
-
-### SSL certificate issues
-
-```bash
-# Test certificate renewal
-sudo certbot renew --dry-run
-
-# Force renewal
-sudo certbot renew --force-renewal
-```
-
-### Port already in use
-
-```bash
-# Check what's using the port
-sudo lsof -i :8890
-
-# Change port during installation
-curl -fsSL <url>/install.sh | bash -s -- -d domain.com -u admin -p 9000
-```
-
-## 🏗️ Architecture
-
-```
-┌─────────────┐
-│   Browser   │
-└──────┬──────┘
-       │ HTTPS (443)
-       ▼
-┌─────────────┐
-│    nginx    │ ◄─── SSL/TLS termination, Basic Auth
-└──────┬──────┘
-       │ HTTP (8890)
-       ▼
-┌─────────────┐
-│  server.py  │ ◄─── Python/aiohttp WebSocket server
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│    tmux     │ ◄─── Persistent terminal sessions
-└─────────────┘
-```
-
-## 📝 Configuration Files
-
-- **Install location**: `~/.rdock/`
-- **Server state**: `~/.rdock_state.json`
-- **nginx config**: `/etc/nginx/sites-available/YOUR_DOMAIN`
-- **Auth file**: `/etc/nginx/.htpasswd`
-- **systemd service**: `/etc/systemd/system/rdock.service`
-
-## 🤝 Contributing
-
-Contributions welcome! Please feel free to submit a Pull Request.
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
-## 🙏 Acknowledgments
-
-Inspired by [oh-my-tmux](https://github.com/gpakosz/.tmux) for the one-line install approach.
-
-## 💡 Tips
-
-- Use tmux features like split panes within the web terminal
-- Create named tmux sessions for different projects
-- Recent VS Code workspaces are remembered server-side
-- Sessions persist across browser restarts and even server reboots
-
----
-
-**Made with ❤️ for remote developers**
+MIT
