@@ -106,7 +106,7 @@ fi
 
 # Domain (required)
 if [ -z "$DOMAIN" ]; then
-    read -p "Domain name (e.g., dev.example.com): " DOMAIN
+    read -p "Domain name (e.g., dev.example.com): " DOMAIN < /dev/tty
     if [ -z "$DOMAIN" ]; then
         echo -e "${RED}[x]${NC} Domain is required"
         exit 1
@@ -115,7 +115,7 @@ fi
 
 # Username (required — auth is mandatory for security)
 if [ -z "$USERNAME" ]; then
-    read -p "Username for basic auth: " USERNAME
+    read -p "Username for basic auth: " USERNAME < /dev/tty
     if [ -z "$USERNAME" ]; then
         echo -e "${RED}[x]${NC} Username is required. VS Code Web must be password-protected."
         exit 1
@@ -124,7 +124,7 @@ fi
 
 # Port
 if [ -z "$PORT" ]; then
-    read -p "Port for VS Code server [8893]: " PORT
+    read -p "Port for VS Code server [8893]: " PORT < /dev/tty
     PORT="${PORT:-8893}"
 fi
 
@@ -138,7 +138,7 @@ if [ "$SKIP_SSL" = true ]; then
     echo ""
     echo -e "${RED}WARNING: Running without HTTPS exposes your credentials and code to interception.${NC}"
     echo -e "${RED}Only skip SSL for local/testing environments.${NC}"
-    read -p "Continue without SSL? (y/N): " CONFIRM
+    read -p "Continue without SSL? (y/N): " CONFIRM < /dev/tty
     if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
         echo "Aborting. Remove -s flag to set up SSL."
         exit 1
@@ -209,7 +209,7 @@ if [ ! -f /etc/nginx/.htpasswd ]; then
 else
     if sudo grep -q "^${USERNAME}:" /etc/nginx/.htpasswd; then
         echo -e "${GREEN}[+]${NC} User '$USERNAME' already exists in htpasswd"
-        read -p "Update password? (y/N): " UPDATE_PW
+        read -p "Update password? (y/N): " UPDATE_PW < /dev/tty
         if [[ "$UPDATE_PW" =~ ^[Yy]$ ]]; then
             sudo htpasswd /etc/nginx/.htpasswd "$USERNAME"
         fi

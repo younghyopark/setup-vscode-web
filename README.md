@@ -4,21 +4,21 @@ Simple, secure VS Code Web setup helper. One command to get VS Code running in y
 
 ## Quick Start
 
-**One-liner (interactive):**
+Just run this — it will ask you everything interactively:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/setup-vscode-web.sh | bash
 ```
 
-**With flags (no prompts):**
+Works over SSH too. You'll be prompted for domain, username, port, and password.
+
+Or pass flags to skip the prompts:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/setup-vscode-web.sh | bash -s -- \
   -d dev.example.com \
   -u admin
 ```
-
-You'll be prompted for a password during setup.
 
 ## What It Does
 
