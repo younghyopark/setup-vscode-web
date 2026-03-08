@@ -69,6 +69,35 @@ sudo systemctl status rdock
 cd ~/.rdock && git pull && sudo systemctl restart rdock
 ```
 
+## 💻 VS Code Only (Standalone)
+
+Want just VS Code in your browser without the full rdock terminal? Use the lightweight installer:
+
+**One-liner (interactive - asks you everything):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/install-vscode.sh | bash
+```
+
+**One-liner with flags (no prompts):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/younghyopark/rdock/main/install-vscode.sh | bash -s -- \
+  -d myserver.example.com \
+  -p 8893 \
+  -u admin
+```
+
+This installs the official VS Code CLI, sets up nginx to reverse-proxy at `https://DOMAIN/code/`, configures SSL, and runs it as a systemd service. If an nginx config already exists for the domain, it appends the `/code/` location block.
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-d` | Domain name | _(prompted)_ |
+| `-p` | Local port | `8893` |
+| `-u` | Username for basic auth | _(none)_ |
+| `--no-auth` | Skip basic auth | |
+| `-s` | Skip SSL/certbot | |
+
 ## ⚙️ Advanced Options
 
 ### Skip SSL (use existing certificate)
